@@ -21,6 +21,10 @@ Our mission is to make professional-grade fitness and nutrition guidance accessi
 
 - Python 3.12.5
 - Poetry (Python package manager)
+- Docker
+- Kubernetes (Minikube for local development)
+- Helm
+- kubectl
 
 ### Installation
 
@@ -38,25 +42,36 @@ Our mission is to make professional-grade fitness and nutrition guidance accessi
 
 ### Running the Application
 
-To start the application:
+#### Local Development
+
+To start the application locally:
 
 ```
 poetry run uvicorn src.main:app --reload
 ```
 
-The application will be available at `http://127.0.0.1:8000`.
+#### Containerized Environment
+
+To run the application using Docker:
+
+1. Build the Docker image:
+
+   ```
+   docker build -t fitness-nutrition-saas:latest .
+   ```
+
+2. Run the Docker container:
+   ```
+   docker run -p 8000:8000 fitness-nutrition-saas:latest
+   ```
+
+For Kubernetes deployment, refer to the [Deployment Guide](docs/deployment_guide.md).
 
 ## Development
 
-This project uses a `Build.ps1` PowerShell script to manage common development tasks.
-
 ### Available Commands
 
-- Setup: `poetry run build setup`
-- Run tests: `poetry run build test`
-- Lint code: `poetry run build lint`
-- Format code: `poetry run build format`
-- Show all available tasks: `poetry run build help`
+For a comprehensive list of development commands, please refer to the [Important Commands](docs/important_commands.md) document.
 
 ### Running Tests
 
@@ -82,78 +97,66 @@ poetry add --dev <package-name>
 
 ### Pre-commit Hooks
 
-This project uses pre-commit hooks to ensure code quality and consistency. The following hooks are configured:
-
-1. **pre-commit-hooks:**
-
-   - `trailing-whitespace`: Removes trailing whitespace.
-   - `end-of-file-fixer`: Ensures files end with a newline.
-   - `check-yaml`: Checks YAML files for syntax errors.
-   - `check-added-large-files`: Prevents giant files from being committed.
-
-2. **black:** Formats Python code to adhere to the Black code style.
-
-3. **flake8:** Checks Python code for style and quality issues.
-
-4. **prettier:** Formats various file types for consistent style.
-
-To install the pre-commit hooks, run:
+This project uses pre-commit hooks to ensure code quality. To install the pre-commit hooks:
 
 ```
 pre-commit install
 ```
 
-These hooks will run automatically on every commit. You can also run them manually on all files with:
-
-```
-pre-commit run --all-files
-```
-
 ## Project Structure
 
 ```
-Fitness-and-Nutrition-SaaS/
+FITNESS-AND-NUTRITION-SAAS/
 ├── .github/
+│   └── ISSUE_TEMPLATE/
+│       └── pull_request_template.md
+├── .pytest_cache/
+├── .venv/
+├── .vscode/
+│   └── settings.json
+├── docs/
+│   ├── debugging_guide.md
+│   ├── deployment_guide.md
+│   └── important_commands.md
+├── k8s/
+│   ├── deployment.yaml
+│   └── service.yaml
 ├── src/
 │   ├── __init__.py
 │   └── main.py
 ├── tests/
 │   └── test_main.py
-├── .venv/
-├── .vscode/
+├── user-service/
+│   ├── charts/
+│   ├── templates/
+│   ├── .helmignore
+│   ├── Chart.yaml
+│   └── values.yaml
 ├── .env
+├── .gitattributes
 ├── .gitignore
 ├── .pre-commit-config.yaml
 ├── Build.ps1
 ├── conftest.py
+├── docker-compose.yml
+├── Dockerfile
 ├── LICENSE
 ├── poetry.lock
 ├── pyproject.toml
 └── README.md
 ```
 
-### Key Files and Directories
+## Deployment
 
-- `src/`: Contains the main application code.
-  - `__init__.py`: Initializes the `src` directory as a Python package.
-  - `main.py`: The main entry point of the application, containing the FastAPI app setup.
-- `tests/`: Contains test files for ensuring code quality and functionality.
-  - `test_main.py`: Contains tests for the main application logic.
-- `.github/`: Contains GitHub-specific configurations and workflows.
-- `.venv/`: Virtual environment directory (created by Poetry).
-- `.vscode/`: VS Code configuration files for consistent development settings.
-- `.env`: Stores environment variables (not tracked by git).
-- `.gitignore`: Specifies files and directories ignored by git.
-- `.pre-commit-config.yaml`: Configuration for pre-commit hooks, ensuring code quality before commits.
-- `Build.ps1`: PowerShell script for running common development tasks.
-- `conftest.py`: Configuration file for pytest.
-- `LICENSE`: The license file for the project.
-- `poetry.lock`: Lock file for Poetry dependencies, ensuring consistent installations.
-- `pyproject.toml`: Project configuration and dependencies specification.
+For detailed instructions on deploying the application to a Kubernetes cluster, please refer to the [Deployment Guide](docs/deployment_guide.md).
+
+## Debugging
+
+For troubleshooting issues in the containerized environment, please consult the [Debugging Guide](docs/debugging_guide.md).
 
 ## Contributing
 
-We welcome contributions to the Fitness-and-Nutrition-SaaS project! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, development process, and how to submit pull requests.
+We welcome contributions to the Fitness-and-Nutrition-SaaS project! Please read our contribution guidelines (to be added) for details on our code of conduct and the process for submitting pull requests.
 
 ## License
 
