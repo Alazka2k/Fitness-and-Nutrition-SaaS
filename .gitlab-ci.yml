@@ -1,0 +1,104 @@
+stages:
+  - lint
+  - build
+  - test
+  - deploy_staging
+  - deploy_production
+
+variables:
+  DOCKER_REGISTRY: $CI_REGISTRY
+  IMAGE_NAME: fitness-saas
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+default:
+  image: python:3.9
+
+cache:
+  paths:
+    - .cache/pip
+    - .venv
+
+before_script:
+  - pip install poetry
+  - poetry config virtualenvs.create false
+  - poetry install
+
+lint:
+  stage: lint
+  script:
+    - pip install pre-commit
+    - pre-commit run --all-files
+
+check_pre_commit:
+  stage: lint
+  script:
+    - pip install pre-commit
+    - pre-commit autoupdate
+    - git diff --exit-code
+  allow_failure: true
+
+build:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  script:
+    - docker build -t $DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
+    - docker push $DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+  only:
+    - main
+    - develop
+
+test:
+  stage: test
+  script:
+    - poetry run pytest tests
+
+security_scan:
+  stage: test
+  script:
+    - pip install safety
+    - safety check
+
+deploy_staging:
+  stage: deploy_staging
+  image: bitnami/kubectl:latest
+  before_script:
+    - echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+    - export KUBECONFIG=kubeconfig
+  script:
+    - kubectl config use-context staging
+    - kubectl set image deployment/fitness-saas fitness-saas=$DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+    - kubectl rollout status deployment/fitness-saas
+  environment:
+    name: staging
+  only:
+    - develop
+
+deploy_production:
+  stage: deploy_production
+  image: bitnami/kubectl:latest
+  before_script:
+    - echo "$KUBE_CONFIG" | base64 -d > kubeconfig
+    - export KUBECONFIG=kubeconfig
+  script:
+    - kubectl config use-context production
+    - kubectl set image deployment/fitness-saas fitness-saas=$DOCKER_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+    - kubectl rollout status deployment/fitness-saas
+  environment:
+    name: production
+  when: manual
+  only:
+    - main
+
+create_release:
+  stage: deploy_production
+  script:
+    - git config user.name "GitLab CI"
+    - git config user.email "gitlab-ci@example.com"
+    - git tag -a v$CI_PIPELINE_IID -m "Release v$CI_PIPELINE_IID"
+    - git push origin v$CI_PIPELINE_IID
+  only:
+    - main
